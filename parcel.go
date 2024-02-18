@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 )
 
 type ParcelStore struct {
@@ -19,7 +18,6 @@ func (s ParcelStore) Add(p Parcel) (int64, error) {
 	res, err := s.db.Exec("INSERT INTO parcel (client, status, address, created_at) VALUES (:client, :status, :address, :created_at)",
 		sql.Named("client", p.Client), sql.Named("status", p.Status), sql.Named("address", p.Address), sql.Named("created_at", p.CreatedAt))
 	if err != nil {
-		fmt.Println(err)
 		return 0, err
 	}
 
@@ -43,8 +41,7 @@ func (s ParcelStore) Get(number int64) (Parcel, error) {
 
 	err := onerow.Scan(&p.Client, &p.Status, &p.Address, &p.CreatedAt)
 	if err != nil {
-		fmt.Println(err)
-		return p, nil
+		return p, err
 	}
 
 	return p, nil
@@ -60,8 +57,7 @@ func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
 	var res []Parcel
 
 	if err != nil {
-		fmt.Println(err)
-		return res, nil
+		return res, err
 	}
 	defer rows.Close()
 
@@ -71,8 +67,7 @@ func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
 		// Читаем данные из текущей строки, куда перемещён курсор
 		err := rows.Scan(&p.Number, &p.Client, &p.Status, &p.Address, &p.CreatedAt)
 		if err != nil {
-			fmt.Println(err)
-			return res, nil
+			return res, err
 		}
 
 		res = append(res, p)
@@ -86,7 +81,6 @@ func (s ParcelStore) SetStatus(number int64, status string) error {
 
 	_, err := s.db.Exec("UPDATE parcel SET status = :status WHERE number = :id", sql.Named("status", status), sql.Named("id", number))
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
@@ -97,9 +91,8 @@ func (s ParcelStore) SetAddress(number int64, address string) error {
 	// реализуйте обновление адреса в таблице parcel
 	// менять адрес можно только если значение статуса registered
 
-	_, err := s.db.Exec("UPDATE parcel SET address = :address WHERE number = :id AND status LIKE 'registered'", sql.Named("address", address), sql.Named("id", number))
+	_, err := s.db.Exec("UPDATE parcel SET address = :address WHERE number = :id AND status = 'registered'", sql.Named("address", address), sql.Named("id", number))
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
@@ -110,9 +103,8 @@ func (s ParcelStore) Delete(number int64) error {
 	// реализуйте удаление строки из таблицы parcel
 	// удалять строку можно только если значение статуса registered
 
-	_, err := s.db.Exec("DELETE FROM parcel WHERE number = :id AND status LIKE 'registered'", sql.Named("id", number))
+	_, err := s.db.Exec("DELETE FROM parcel WHERE number = :id AND status = 'registered'", sql.Named("id", number))
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
